@@ -1,5 +1,4 @@
 import json
-import time
 from tqdm import tqdm
 import requests
 
@@ -19,6 +18,7 @@ with open(f'Cats/{words}.json', 'w') as f:
     json.dump(keep_dict, f)
 
 
+
 """Creating yandex disk file for saving images"""
 
 
@@ -36,35 +36,27 @@ class YAPI:
                                 params=params)
         return response.status_code
 
-    def upload_files(self, local_path, yandex_disk, local_json, yandex_json):
+    def upload_files(self, local_path, yandex_disk):
         params = {'path': yandex_disk}
         response = requests.get(f'{self.base_url}/v1/disk/resources/upload', params=params, headers=self.header)
-        # print(response.status_code) --Checking response
         upload_link = response.json()['href']
-
         with open(local_path, 'rb') as f:
             requests.put(upload_link, files={'file': f})
-
-        params = {'path': yandex_json}
-
-        response = requests.get(f'{self.base_url}/v1/disk/resources/upload', params=params, headers=self.header)
-        # print(response.status_code) --Checking response
-        upload_link = response.json()['href']
-
-        with open(local_json, 'r') as f:
-            requests.put(upload_link, files={'file': f})
-
-"""Progress bar by tqdm"""
-
-links = ['https://cloud-api.yandex.net/v1/disk/resources', 'https://cloud-api.yandex.net/v1/disk/resources/upload']
-for link in tqdm(links):
-    time.sleep(2)
-
 
 """For users"""
 
 account = YAPI(token)
 account.create_folder("PD-FPY-136")
-account.upload_files(f'Cats/{words}.jpg', f'PD-FPY-136/{words}.jpg', f'Cats/{words}.json', f'PD-FPY-136/{words}.json' )
+
+files_to_upload = [
+    {'local': f'Cats/{words}.jpg', 'remote': f'PD-FPY-136/{words}.jpg'},
+    {'local': f'Cats/{words}.json', 'remote': f'PD-FPY-136/{words}.json'}
+]
+
+"""Progress bar by tqdm"""
+
+print("Загрузка файлов на Яндекс.Диск...")
+for file in tqdm(files_to_upload):
+    account.upload_files(local_path = file['local'], yandex_disk = file['remote'])
 
 
